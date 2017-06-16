@@ -1,6 +1,6 @@
 # Housing-Sales-Price-Ames-Iowa
 # Collaborative project for MSDS6372-Applied Statistics: Inferenceing and Modeling
-## We used SAS for this project 
+## SAS (Staistical Analysis Software) was used to complete this project.
 
 ## This project provides insight into the home sales in Ames, Iowa from 2006-2010.  We explore several factors that affect the sale prices of homes such as the usual suspects of neighborhood, square footage, year built and not so typical thought of factors such as a full bathroom in basement. Housing sales data for the Ames, Iowa housing market is publicly available at the following URL  Housing Data for Ames Iowa.  The Ames, Iowa Housing dataset was compiled by Dean De Cock of Truman State University[1].  A full description of each data field is given in the “data_description,txt” text file at the referenced URL.  Our team develops a concise model using multiple linear regression techniques for Ames’s housing sale price. The model will help real estate agents, contractors, and prospective buyers gain important insight on the factors that are currently influencing housing sale prices in Ames, Iowa. Our model can be complex due to the substantial number of explanatory variables.  However, our model is narrowed down to the most significant factors to keep the model as simple as possible. This is primarily achieved by using the LASSO variable-selection method.
 
