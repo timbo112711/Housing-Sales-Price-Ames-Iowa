@@ -1,0 +1,55 @@
+/***********************************************
+ ***********************************************
+ *     FINAL MODEL using PROC GLM Output       *
+ *            Output Regression                *
+ *     Get plots and graphs requested          *
+ *     unpack diagnostics with labels          *
+ ***********************************************
+ ***********************************************/
+proc means maxdec=4 N mean stddev min Q1 median Q3 max data=trainreg;
+var LogSalePrice OverallQual OverAllCond LogGrLivArea GarageCars LogTotalBsmtSF LogGarageArea LogBsmtFinSF1
+    LogGrLivArea LogTotalBsmtSF LogBsmtFinSF1 LogLotArea Log_1stFlrSF;
+run;
+
+data train3; set train2;
+MnAdjOverallQual = OverallQual-6.094;
+MnAdjOverallCond = OverallCond - 5.5761;
+MnAdjLogGrLivArea = LogGrLivArea - 7.266;
+MnAdjGarageCars = GarageCars - 1.7661;
+MnAdjLogTotalBsmtSF = LogTotalBsmtSF - 6.7483;
+MnAdjLogGarageArea = LogGarageArea - 5.8065;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLogLotArea = LogLotArea - 9.1086;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLog_1stFlrSF = Log_1stFlrSF - 7.0067;
+run;
+
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glm data=train3 plots(unpack)=diagnostic(label);  /* plot=all */  
+
+class Neighborhood MSZoning CentralAir KitchenQual BsmtQual Foundation;
+
+model LogSalePrice = LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea  
+Log_1stFlrSF Neighborhood OverallQual OverallCond GarageCars Fireplaces YearBuilt 
+YearRemodAdd MSZoning CentralAir KitchenQual BsmtFullBath BsmtQual 
+MSZoning*CentralAir MnAdjOverallQual*MnAdjLogGrLivArea MnAdjLogGrLivArea*Neighborhood
+/ CLI CLPARM CLM SOLUTION TOLERANCE CLM;
+output out=CustData p=predict PRESS=CVPress;
+
+run;quit;
+
+ODS GRAPHICS OFF; 
+
+/* Filter out and calculate Prediction */
+data resultsCust;
+	set CustData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92); /* mean of training data */
+	if Predict='.' then LogSalePrice = log(180932.92); /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsCust;
+run;

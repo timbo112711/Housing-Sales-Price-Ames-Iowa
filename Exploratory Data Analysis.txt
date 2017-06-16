@@ -1,0 +1,41 @@
+/***********************************************
+ ***********************************************
+ *     APPENDIX Exploratory Data Analysis      *
+ ***********************************************
+ ***********************************************/
+/* Exploratory Data Analysis */
+proc means maxdec=4 N mean stddev min Q1 median Q3 max data=trainreg;
+var LogSalePrice LogGrLivArea LogGarageArea LogBsmtFinSF1
+    LogLotArea Log_1stFlrSF
+	LogLotFrontage LogMasVnrArea LogBsmtFinSF2 
+	LogBsmtUnfSF LogTotalBsmtSF Log_2ndFlrSF LowQualFinSF 
+	LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+	LogScreenPorch LogPoolArea ;
+run;
+
+data sortdat; set trainreg;
+run;
+proc sort data = sortdat;
+   by LogSalePrice;
+run; 
+
+proc univariate data = trainreg; 
+var LogSaleprice SalePrice;
+histogram LogSaleprice SalePrice;
+run; 
+
+/* Scatterplot matrix */
+proc sgscatter data=trainreg;
+   matrix SalePrice GrLivArea LotArea BsmtFinSF1 GarageArea  / diagonal=(kernel histogram);
+run;
+proc sgscatter data=trainreg;
+   matrix LogSalePrice LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea  / diagonal=(kernel histogram);
+run;
+
+/* Frequency Plot */
+proc freq data=trainreg order=freq;
+   tables Neighborhood OverallQual OverallCond GarageCars Fireplaces 
+   YearBuilt YearRemodAdd BsmtFullBath BsmtQual
+   MSZoning CentralAir KitchenQual BsmtQual Neighborhood
+   /plots=freqplot;
+run;

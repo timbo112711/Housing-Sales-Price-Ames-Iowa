@@ -1,0 +1,802 @@
+/**********************************
+** Project #1:   Analysis 
+** Create by:    James Hosker
+**		Timothy McWilliams
+**               Leticia Valadez
+** SMU Course:   MSDS6372-4023
+** Date Created: 19-Apr-2017
+** Last Update:  27-May-2017
+**********************************/
+
+/*****************************************
+ ** Import the test and train data sets
+ *****************************************/
+/* Generated Code (IMPORT) */
+/* Source File: test.csv */
+/* Source Path: /home/jhosker0/sasuser.v94/MSDS6372/Project1 */
+/* Code generated on: 4/15/17, 10:58 PM */
+
+%web_drop_table(WORK.IMPORT);
+
+FILENAME REFFILE '/home/jhosker0/sasuser.v94/MSDS6372/Project1/test.csv';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=CSV
+	OUT=WORK.IMPORT;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT; RUN;
+
+%web_open_table(WORK.IMPORT);
+
+/* Generated Code (IMPORT) */
+/* Source File: train.csv */
+/* Source Path: /home/jhosker0/sasuser.v94/MSDS6372/Project1 */
+/* Code generated on: 4/15/17, 10:59 PM */
+
+%web_drop_table(WORK.IMPORT2);
+
+FILENAME REFFILE '/home/jhosker0/sasuser.v94/MSDS6372/Project1/train.csv';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=CSV
+	OUT=WORK.IMPORT2;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT2; RUN;
+
+%web_open_table(WORK.IMPORT2);
+
+
+data test; 
+	set WORK.IMPORT;
+run;
+
+data train; 
+	set WORK.IMPORT2;
+run;
+
+data test;
+	set test;
+	SalePrice = .;
+run;
+
+/**********************************************/
+/* Create Filtered Regression Set: TrainReg   */
+/**********************************************/
+data trainreg; 
+	set WORK.IMPORT2;
+    /*  LotFrontage: there are 259 NAs which is ~18% of train.csv (1460)
+		and 227 NAs which is ~16% of test.csv (1459) 
+		so repalced NAs in train set with mean */
+	if LotFrontage="NA" then LotFrontage=70.04996; /* mean value of lotfrontage train data */
+    /* Drop Alley:  there are 1369 NAs in train.csv out of 1460
+	   and 1352 NAs in test.csv out of 1459, so we remove it */
+	Drop Alley;      
+	/* Drop Utilities only one entries is different in train.csv and
+	   no entries that are different in test.csv but has 2 NAs*/     
+	Drop Utilities;	
+    /* Only 4 NA in test.csv MSZoning, RL is most frequent  */
+	if MSZoning="NA" then MSZoning="RL";  
+    /* Only 1 NA in test.csv Exteior1st Edwards neighborhood 
+       which mostly had "Wd Sdng" */
+	if Exterior1st="NA" then Exterior1st="Wd Sdng";  
+    /* Only 1 NA in test.csv Exteior2st Edwards neighborhood 
+       which mostly had "Wd Sdng" */
+    if Exterior2nd="NA" then Exterior2nd= "Wd Shng";
+	/* In test.csv and train.csv, MasVnrType replace NA with None */
+	if MasVnrType="NA" then MasVnrType="None";
+	/* In test.csv and train.csv, MasVnrArea Replace NA 
+	   with 0, since all MasVnrType None have 0 Area */
+	if MasVnrArea="NA" then MasVnrArea=0;
+	/* In 44 test.csv and 37 train.csv, BsmtQual Replace NA with None */
+	if BsmtQual="NA" then BsmtQual="None";
+	/* In 45 test.csv and 37 train.csv, BsmtCond Replace NA with None */
+	if BsmtCond="NA" then BsmtCond="None";
+	/* In 44 test.csv and 38 train.csv, BsmtExposure Replace NA with None */
+	if BsmtExposure="NA" then BsmtExposure="None";
+	/* In 42 test.csv and 37 train.csv, NA in test for BsmtFinType1 set NA to None*/ 
+	if BsmtFinType1="NA" then BsmtFinType1="None";
+	/* In test.csv, 1 NA in test for BsmtFinSF1 set NA to 0, 
+	   all NAs in BsmtFinType1 in train.csv have 0 for BsmtFinSF1 */ 
+	if BsmtFinSF1="NA" then BsmtFinSF1=0;
+	/* In 42 test.csv and 38 train.csv, NA in test for BsmtFinType1 set NA to None*/ 
+	if BsmtFinType2="NA" then BsmtFinType2="None";
+	/* In test.csv, 1 NA in test for BsmtFinSF2 set NA to 0, 
+	   all NAs in BsmtFinType2 in train.csv have 0 for BsmtFinSF2 */ 
+	if BsmtFinSF2="NA" then BsmtFinSF2=0;
+	/* In test.csv, 1 NA in test for BsmtUnfSF set NA to 0 */ 
+	if BsmtUnfSF="NA" then BsmtUnfSF=0;
+	/* In train.csv, 1 NA in test for Electrical set NA 
+	   to SBrkr the most frequent response */ 
+	if Electrical="NA" then Electrical="SBrkr";
+	/* In test.csv, 1 NA in test for TotalBsmtSF set NA to 0 */ 
+	if TotalBsmtSF="NA" then TotalBsmtSF=0;
+	/* In test.csv, 2 NA in test for BsmtFullBath set NA to 0 */ 
+	if BsmtFullBath="NA" then BsmtFullBath=0;
+	/* In test.csv, 2 NA in test for BsmtHalfBath set NA to 0 */ 
+	if BsmtHalfBath="NA" then BsmtHalfBath=0;	
+	/* In test.csv, 1 NA for KitchenQual set NA to TA, most frequent */ 
+	if KitchenQual="NA" then KitchenQual="TA";
+	/* In test.csv, 2 NA in test for Functional set NA to Typ, most frequent */ 
+	if Functional="NA" then Functional="Typ";
+	/* In 730 test.csv and 690 train.csv, FireplaceQu NA make category None */ 
+	if FireplaceQu="NA" then FireplaceQu="None";
+	/* In 76 test.csv and 81 train.csv, GarageType NA make category None */ 
+	if GarageType="NA" then GarageType="None";
+	/* In 78 test.csv and 81 train.csv, GarageYrBlt NA equal to mean 1978 in train.csv */ 
+	if GarageYrBlt="NA" then GarageYrBlt=1978;  /* mean year of dataset in train.csv */
+	/* In 78 test.csv and 81 train.csv, GarageFinish NA equal to None */ 
+	if GarageFinish="NA" then GarageFinish="None";
+	/* In test.csv, GarageCars 1 NA set equal to 0 */ 
+	if GarageCars="NA" then GarageCars=0;
+	/* In test.csv, GarageArea 1 NA set equal to 0 */ 
+	if GarageArea="NA" then GarageArea=0;
+	/* In 78 test.csv and 81 train.csv, GarageQual NA set equal to None */ 
+	if GarageQual="NA" then GarageQual="None";
+	/* In 78 test.csv and 81 train.csv, GarageCond NA set equal to None */ 
+	if GarageCond="NA" then GarageCond="None";
+    /* Drop PoolQC:  there are 1453 NAs in train.csv out of 1460
+	   and 1456 NAs in test.csv out of 1459, so we remove it */
+	Drop PoolQC;      
+    /* Drop Fence:  there are 1179 NAs in train.csv out of 1460
+	   and 1169 NAs in test.csv out of 1459, so we remove it */
+	Drop Fence;      
+    /* Drop MiscFeature:  there are 1406 NAs in train.csv out of 1460
+	   and 1408 NAs in test.csv out of 1459, so we remove it */
+	Drop MiscFeature;      
+	/* In test.csv, 1 NA for SaleType set NA to WD, most frequent */ 
+	if SaleType="NA" then SaleType="WD";
+	/* Remove Data Points 524 and 1299 */
+	if id = 524 then delete;  
+	if id = 1299 then delete;     
+run;
+
+/**********************************************/
+/* Create Filtered Regression/Prediction      */
+/*     Train2 Set                              */
+/**********************************************/
+data train2;
+	set train test;
+    /*  LotFrontage: there are 259 NAs which is ~18% of train.csv (1460)
+		and 227 NAs which is ~16% of test.csv (1459) 
+		so repalced NAs in train set with mean */
+	if LotFrontage="NA" then LotFrontage=70.04996; /* mean value of lotfrontage train data */
+    /* Drop Alley:  there are 1369 NAs in train.csv out of 1460
+	   and 1352 NAs in test.csv out of 1459, so we remove it */
+	Drop Alley;      
+	/* Drop Utilities only one entries is different in train.csv and
+	   no entries that are different in test.csv but has 2 NAs*/     
+	Drop Utilities;	
+    /* Only 4 NA in test.csv MSZoning, RL is most frequent  */
+	if MSZoning="NA" then MSZoning="RL";  
+    /* Only 1 NA in test.csv Exteior1st Edwards neighborhood 
+       which mostly had "Wd Sdng" */
+	if Exterior1st="NA" then Exterior1st="Wd Sdng";  
+    /* Only 1 NA in test.csv Exteior2st Edwards neighborhood 
+       which mostly had "Wd Sdng" */
+    if Exterior2nd="NA" then Exterior2nd= "Wd Shng";
+	/* In test.csv and train.csv, MasVnrType replace NA with None */
+	if MasVnrType="NA" then MasVnrType="None";
+	/* In test.csv and train.csv, MasVnrArea Replace NA 
+	   with 0, since all MasVnrType None have 0 Area */
+	if MasVnrArea="NA" then MasVnrArea=0;
+	/* In 44 test.csv and 37 train.csv, BsmtQual Replace NA with None */
+	if BsmtQual="NA" then BsmtQual="None";
+	/* In 45 test.csv and 37 train.csv, BsmtCond Replace NA with None */
+	if BsmtCond="NA" then BsmtCond="None";
+	/* In 44 test.csv and 38 train.csv, BsmtExposure Replace NA with None */
+	if BsmtExposure="NA" then BsmtExposure="None";
+	/* In 42 test.csv and 37 train.csv, NA in test for BsmtFinType1 set NA to None*/ 
+	if BsmtFinType1="NA" then BsmtFinType1="None";
+	/* In test.csv, 1 NA in test for BsmtFinSF1 set NA to 0, 
+	   all NAs in BsmtFinType1 in train.csv have 0 for BsmtFinSF1 */ 
+	if BsmtFinSF1="NA" then BsmtFinSF1=0;
+	/* In 42 test.csv and 38 train.csv, NA in test for BsmtFinType1 set NA to None*/ 
+	if BsmtFinType2="NA" then BsmtFinType2="None";
+	/* In test.csv, 1 NA in test for BsmtFinSF2 set NA to 0, 
+	   all NAs in BsmtFinType2 in train.csv have 0 for BsmtFinSF2 */ 
+	if BsmtFinSF2="NA" then BsmtFinSF2=0;
+	/* In test.csv, 1 NA in test for BsmtUnfSF set NA to 0 */ 
+	if BsmtUnfSF="NA" then BsmtUnfSF=0;
+	/* In train.csv, 1 NA in test for Electrical set NA 
+	   to SBrkr the most frequent response */ 
+	if Electrical="NA" then Electrical="SBrkr";
+	/* In test.csv, 1 NA in test for TotalBsmtSF set NA to 0 */ 
+	if TotalBsmtSF="NA" then TotalBsmtSF=0;
+	/* In test.csv, 2 NA in test for BsmtFullBath set NA to 0 */ 
+	if BsmtFullBath="NA" then BsmtFullBath=0;
+	/* In test.csv, 2 NA in test for BsmtHalfBath set NA to 0 */ 
+	if BsmtHalfBath="NA" then BsmtHalfBath=0;	
+	/* In test.csv, 1 NA for KitchenQual set NA to TA, most frequent */ 
+	if KitchenQual="NA" then KitchenQual="TA";
+	/* In test.csv, 2 NA in test for Functional set NA to Typ, most frequent */ 
+	if Functional="NA" then Functional="Typ";
+	/* In 730 test.csv and 690 train.csv, FireplaceQu NA make category None */ 
+	if FireplaceQu="NA" then FireplaceQu="None";
+	/* In 76 test.csv and 81 train.csv, GarageType NA make category None */ 
+	if GarageType="NA" then GarageType="None";
+	/* In 78 test.csv and 81 train.csv, GarageYrBlt NA equal to mean 1978 in train.csv */ 
+	if GarageYrBlt="NA" then GarageYrBlt=1978;  /* mean year of dataset in train.csv */
+	/* In 78 test.csv and 81 train.csv, GarageFinish NA equal to None */ 
+	if GarageFinish="NA" then GarageFinish="None";
+	/* In test.csv, GarageCars 1 NA set equal to 0 */ 
+	if GarageCars="NA" then GarageCars=0;
+	/* In test.csv, GarageArea 1 NA set equal to 0 */ 
+	if GarageArea="NA" then GarageArea=0;
+	/* In 78 test.csv and 81 train.csv, GarageQual NA set equal to None */ 
+	if GarageQual="NA" then GarageQual="None";
+	/* In 78 test.csv and 81 train.csv, GarageCond NA set equal to None */ 
+	if GarageCond="NA" then GarageCond="None";
+    /* Drop PoolQC:  there are 1453 NAs in train.csv out of 1460
+	   and 1456 NAs in test.csv out of 1459, so we remove it */
+	Drop PoolQC;      
+    /* Drop Fence:  there are 1179 NAs in train.csv out of 1460
+	   and 1169 NAs in test.csv out of 1459, so we remove it */
+	Drop Fence;      
+    /* Drop MiscFeature:  there are 1406 NAs in train.csv out of 1460
+	   and 1408 NAs in test.csv out of 1459, so we remove it */
+	Drop MiscFeature;      
+	/* In test.csv, 1 NA for SaleType set NA to WD, most frequent */ 
+	if SaleType="NA" then SaleType="WD";
+	/* Remove Data Points 524 and 1299 see Appendix in Report */
+	if id = 524 then delete;  
+	if id = 1299 then delete;   
+run;
+
+/********************************************************************/
+/* 1. Fix Issues with LotFrontage Data characters instead of number */
+/* 2. Add LogSalPrice and LogGrLivArea to both trainreg and train2  */
+/********************************************************************/
+data train2;
+	set train2 (rename=(LotFrontage = LotFrontageChar)) ;
+	LotFrontage = input(LotFrontageChar,best.);
+	LogSalePrice = log(SalePrice);
+	LogGrLivArea = log(GrLivArea); 
+	LogTotalBsmtSF = log(TotalBsmtSF+1); 
+	LogLotArea = log(LotArea+1);
+	LogBsmtFinSF1 = log(BsmtFinSF1+1);
+	Log_1stFlrSF = log(_1stFlrSF+1);
+	Log_2ndFlrSF = log(_2ndFlrSF+1);
+	LogGarageArea = log(GarageArea + 1);
+	LogBsmtFinSF2 = log(BsmtFinSF2 + 1);
+	LogBsmtUnfSF = log(BsmtUnfSF + 1);
+	LogLotFrontage = log(LotFrontage+1);
+	LogWoodDeckSF = log(WoodDeckSF+1);
+	LogOpenPorchSF = log(OpenPorchSF+1);
+	LogMasVnrArea = log(MasVnrArea+1);
+	LogEnclosedPorch = log(EnclosedPorch+1); 
+	Log_3SsnPorch    = log(_3SsnPorch+1);
+	LogScreenPorch = log(ScreenPorch+1); 
+	LogPoolArea = log(PoolArea+1);
+	Drop LotFrontageChar;	
+run;
+
+data trainreg;
+	set trainreg (rename=(LotFrontage = LotFrontageChar)) ;
+	LotFrontage = input(LotFrontageChar,best.);
+	LogSalePrice = log(SalePrice);
+	LogGrLivArea = log(GrLivArea); 
+	LogTotalBsmtSF = log(TotalBsmtSF+1); 
+	LogLotArea = log(LotArea+1);
+	LogBsmtFinSF1 = log(BsmtFinSF1+1);
+	Log_1stFlrSF = log(_1stFlrSF+1);
+	Log_2ndFlrSF = log(_2ndFlrSF+1);
+	LogGarageArea = log(GarageArea + 1);
+	LogBsmtFinSF2 = log(BsmtFinSF2 + 1);
+	LogBsmtUnfSF = log(BsmtUnfSF + 1);
+	LogLotFrontage = log(LotFrontage+1);
+	LogWoodDeckSF = log(WoodDeckSF+1);
+	LogOpenPorchSF = log(OpenPorchSF+1);
+	LogMasVnrArea = log(MasVnrArea+1);
+	LogEnclosedPorch = log(EnclosedPorch+1); 
+	Log_3SsnPorch    = log(_3SsnPorch+1);
+	LogScreenPorch = log(ScreenPorch+1); 
+	LogPoolArea = log(PoolArea+1);
+	Group = 1;
+	Drop LotFrontageChar;	
+run;
+
+
+/***********************************************
+ ***********************************************
+ *     FINAL MODEL using PROC GLM Output       *
+ *            Output Regression                *
+ *     Get plots and graphs requested          *
+ *     unpack diagnostics with labels          *
+ ***********************************************
+ ***********************************************/
+proc means maxdec=4 N mean stddev min Q1 median Q3 max data=trainreg;
+var LogSalePrice OverallQual OverAllCond LogGrLivArea GarageCars LogTotalBsmtSF LogGarageArea LogBsmtFinSF1
+    LogGrLivArea LogTotalBsmtSF LogBsmtFinSF1 LogLotArea Log_1stFlrSF;
+run;
+
+data train3; set train2;
+MnAdjOverallQual = OverallQual-6.094;
+MnAdjOverallCond = OverallCond - 5.5761;
+MnAdjLogGrLivArea = LogGrLivArea - 7.266;
+MnAdjGarageCars = GarageCars - 1.7661;
+MnAdjLogTotalBsmtSF = LogTotalBsmtSF - 6.7483;
+MnAdjLogGarageArea = LogGarageArea - 5.8065;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLogLotArea = LogLotArea - 9.1086;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLog_1stFlrSF = Log_1stFlrSF - 7.0067;
+run;
+
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glm data=train3 plots(unpack)=diagnostic(label);  /* plot=all */  
+
+class Neighborhood MSZoning CentralAir KitchenQual BsmtQual Foundation;
+
+model LogSalePrice = LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea  
+Log_1stFlrSF Neighborhood OverallQual OverallCond GarageCars Fireplaces YearBuilt 
+YearRemodAdd MSZoning CentralAir KitchenQual BsmtFullBath BsmtQual 
+MSZoning*CentralAir MnAdjOverallQual*MnAdjLogGrLivArea MnAdjLogGrLivArea*Neighborhood
+/ CLI CLPARM CLM SOLUTION TOLERANCE CLM;
+output out=CustData p=predict PRESS=CVPress;
+
+run;quit;
+
+ODS GRAPHICS OFF; 
+
+/* Filter out and calculate Prediction */
+data resultsCust;
+	set CustData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92); /* mean of training data */
+	if Predict='.' then LogSalePrice = log(180932.92); /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsCust;
+run;
+
+/***********************************************
+ ***********************************************
+ * APPENDIX on Data Cleaning (Additonal Code)  *
+ ***********************************************
+ ***********************************************/
+proc freq data=WORK.IMPORT2;
+table Utilities PoolQC Fence MiscFeature;
+run;
+
+/***********************************************
+ ***********************************************
+ * APPENDIX on Data Removal (Additonal Code)   *
+ ***********************************************
+ ***********************************************/
+/* Please note to run this analysis you may need comment 
+   out the section of SAS code that removed data points
+   1299 and 524.
+/* Breakout of all Quantitative variables by 
+   Neighborhood and OverallQual */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=trainreg;
+class Neighborhood;
+var SalePrice OverallQual OverAllCond GrLivArea GarageCars GarageArea 
+    BsmtFinSF1 GrLivArea TotalBsmtSF BsmtFinSF1 LotArea _1stFlrSF;
+run;
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=trainreg;
+class OverallQual;
+var SalePrice OverallQual OverAllCond GrLivArea GarageCars GarageArea 
+    BsmtFinSF1 GrLivArea TotalBsmtSF BsmtFinSF1 LotArea _1stFlrSF;
+run;
+
+/***********************************************
+ ***********************************************
+ *     APPENDIX Exploratory Data Analysis      *
+ ***********************************************
+ ***********************************************/
+/* Exploratory Data Analysis */
+proc means maxdec=4 N mean stddev min Q1 median Q3 max data=trainreg;
+var LogSalePrice LogGrLivArea LogGarageArea LogBsmtFinSF1
+    LogLotArea Log_1stFlrSF
+	LogLotFrontage LogMasVnrArea LogBsmtFinSF2 
+	LogBsmtUnfSF LogTotalBsmtSF Log_2ndFlrSF LowQualFinSF 
+	LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+	LogScreenPorch LogPoolArea ;
+run;
+
+data sortdat; set trainreg;
+run;
+proc sort data = sortdat;
+   by LogSalePrice;
+run; 
+
+proc univariate data = trainreg; 
+var LogSaleprice SalePrice;
+histogram LogSaleprice SalePrice;
+run; 
+
+/* Scatterplot matrix */
+proc sgscatter data=trainreg;
+   matrix SalePrice GrLivArea LotArea BsmtFinSF1 GarageArea  / diagonal=(kernel histogram);
+run;
+proc sgscatter data=trainreg;
+   matrix LogSalePrice LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea  / diagonal=(kernel histogram);
+run;
+
+/* Frequency Plot */
+proc freq data=trainreg order=freq;
+   tables Neighborhood OverallQual OverallCond GarageCars Fireplaces 
+   YearBuilt YearRemodAdd BsmtFullBath BsmtQual
+   MSZoning CentralAir KitchenQual BsmtQual Neighborhood
+   /plots=freqplot;
+run;
+
+/***********************************************
+ ***********************************************
+ * APPENDIX on Data Transformation to Natural  *
+ *              Log (Additonal Code)           *
+ ***********************************************
+ ***********************************************/
+/************* Linear regression of orginal response ***************
+ ************* and some explanatory variables  ****/ 
+proc glm data=trainreg plots(unpack)=diagnostic(label);  /* plot=all */  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model SalePrice = GrLivArea Neighborhood MSSubClass MSZoning LotFrontage LotArea Street LotShape LandContour  
+LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle OverallQual OverallCond YearBuilt 
+YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd MasVnrType MasVnrArea ExterQual ExterCond Foundation 
+BsmtQual BsmtCond BsmtExposure BsmtFinType1 BsmtFinSF1 BsmtFinType2 BsmtFinSF2 BsmtUnfSF 
+TotalBsmtSF Heating HeatingQC CentralAir Electrical _1stFlrSF _2ndFlrSF LowQualFinSF 
+BsmtFullBath BsmtHalfBath FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars GarageArea 
+GarageQual GarageCond PavedDrive WoodDeckSF OpenPorchSF EnclosedPorch _3SsnPorch ScreenPorch 
+PoolArea MiscVal MoSold YrSold	SaleType SaleCondition / CLI CLPARM CLM SOLUTION TOLERANCE CLM;
+output out=CustData p=predict PRESS=CVPress;
+
+run;quit;
+
+/************* Linear regression of transformed response ***************
+ ************* and some explanatory variables by the natural log  ****/ 
+proc glm data=trainreg plots(unpack)=diagnostic(label);  /* plot=all */  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition / CLI CLPARM CLM SOLUTION TOLERANCE CLM;
+output out=CustData p=predict PRESS=CVPress;
+
+run;quit;
+
+ODS GRAPHICS OFF; 
+
+/***********************************************/
+/***********************************************/
+/*           APPENDIX for Model                */ 
+/*      Variable-Selection Techniques          */
+/***********************************************/
+/***********************************************/
+
+/***********************************************/
+/***********************************************/
+/*             1. FORWARD SELECTION            */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=forward(select=AIC stop=CV) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=FwdData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsFwd;
+	set FwdData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92);  /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsFwd;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsFwd;
+var SalePrice;
+run;
+
+/***********************************************/
+/***********************************************/
+/*           2. BACKWARD SELECTION             */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=backward(select=AIC stop=CV) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=BckData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsBck;
+	set BckData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92);  /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsFwd;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsBck;
+var SalePrice;
+run;
+
+
+/***********************************************/
+/***********************************************/
+/*          3. STEPWISE SELECTION              */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=stepwise(select=AIC stop=cv) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=StepData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsStep;
+	set StepData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92); /* mean of training data */
+	if Predict='.' then LogSalePrice = log(180932.92); /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsStep;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsStep;
+var SalePrice;
+run;
+
+/***********************************************/
+/***********************************************/
+/*             4. LASSO SELECTION              */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=LASSO(choose=SBC stop=cv) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=LassoData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsLasso;
+	set LassoData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92); /* mean of training data */
+	if Predict='.' then LogSalePrice = log(180932.92); /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsLasso;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsLasso;
+var SalePrice;
+run;
+
+/***********************************************
+ ***********************************************
+ *        5. LASSO interaction term example    *
+ *        regression                           *
+ *        Get plots and graphs requested       *
+ *        unpack diagnostics with labels       *
+ ***********************************************
+ ***********************************************/
+proc means maxdec=4 N mean stddev min Q1 median Q3 max data=trainreg;
+var LogSalePrice OverallQual OverAllCond LogGrLivArea GarageCars LogTotalBsmtSF LogGarageArea LogBsmtFinSF1
+    LogGrLivArea LogTotalBsmtSF LogBsmtFinSF1 LogLotArea Log_1stFlrSF;
+run;
+
+data train3; set train2;
+MnAdjOverallQual = OverallQual-6.094;
+MnAdjOverallCond = OverallCond - 5.5761;
+MnAdjLogGrLivArea = LogGrLivArea - 7.266;
+MnAdjGarageCars = GarageCars - 1.7661;
+MnAdjLogTotalBsmtSF = LogTotalBsmtSF - 6.7483;
+MnAdjLogGarageArea = LogGarageArea - 5.8065;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLogLotArea = LogLotArea - 9.1086;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLog_1stFlrSF = Log_1stFlrSF - 7.0067;
+run;
+
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class Neighborhood MSZoning CentralAir KitchenQual BsmtQual Foundation;
+
+model LogSalePrice =  GarageCars Fireplaces YearBuilt 
+YearRemodAdd MSZoning CentralAir KitchenQual BsmtFullBath BsmtQual LogLotArea 
+Log_1stFlrSF OverallCond
+LogGrLivArea | LogBsmtFinSF1 | LogGarageArea | OverallQual | Neighborhood
+@2 / selection=LASSO(choose=SBC stop=cv) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=LassoData p=predict r=resid;
+/* LogTotalBsmtSF LogBsmtFinSF1 MnAdjOverallQual*Foundation Fireplaces*CentralAir */
+run;quit;
+
+ODS GRAPHICS OFF; 
+
+/***********************************************
+ ***********************************************
+ *         APPENDIX Correlation Analysis       *
+ ***********************************************
+ ***********************************************/
+/************************************************/
+/* Matrix scatter plot and Correlation anaylsis */
+/************************************************/
+
+proc corr data=train3;
+var LogSalePrice LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea Log_1stFlrSF OverallQual OverallCond GarageCars Fireplaces YearBuilt YearRemodAdd BsmtFullBath;
+run; 
+
+proc sgscatter data=train3;
+matrix LogSalePrice LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea Log_1stFlrSF OverallQual OverallCond GarageCars Fireplaces YearBuilt YearRemodAdd BsmtFullBath;
+title "Scatter Plot Matrix of Iowa's Houseing Price Data";
+run;
+ 
+/* Correlation on Neighborhood, MSZoning, KitchenQual, BsmtQual; & CentralAir:
+	(categorical explanitory variables using ChiSq */
+proc freq data=train3;
+tables Neighborhood*MSZoning / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables Neighborhood*KitchenQual / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables KitchenQual*MSZoning / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables KitchenQual*BsmtQual / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables KitchenQual*CentralAir / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables Neighborhood*BsmtQual/ chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables BsmtQual*MSZoning / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables BsmtQual*CentralAir / chisq;
+exact pchi;
+run;
+
+/* not enough memory */
+/*proc freq data=train3;
+tables Neighborhood*CentralAir / chisq;
+exact pchi;
+run;
+ */
+
+proc freq data=train3;
+tables MSZoning*CentralAir / chisq;
+exact pchi;
+run;

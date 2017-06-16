@@ -1,0 +1,71 @@
+/***********************************************
+ ***********************************************
+ *         APPENDIX Correlation Analysis       *
+ ***********************************************
+ ***********************************************/
+/************************************************/
+/* Matrix scatter plot and Correlation anaylsis */
+/************************************************/
+
+proc corr data=train3;
+var LogSalePrice LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea Log_1stFlrSF OverallQual OverallCond GarageCars Fireplaces YearBuilt YearRemodAdd BsmtFullBath;
+run; 
+
+proc sgscatter data=train3;
+matrix LogSalePrice LogGrLivArea LogLotArea LogBsmtFinSF1 LogGarageArea Log_1stFlrSF OverallQual OverallCond GarageCars Fireplaces YearBuilt YearRemodAdd BsmtFullBath;
+title "Scatter Plot Matrix of Iowa's Houseing Price Data";
+run;
+ 
+/* Correlation on Neighborhood, MSZoning, KitchenQual, BsmtQual; & CentralAir:
+	(categorical explanitory variables using ChiSq */
+proc freq data=train3;
+tables Neighborhood*MSZoning / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables Neighborhood*KitchenQual / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables KitchenQual*MSZoning / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables KitchenQual*BsmtQual / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables KitchenQual*CentralAir / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables Neighborhood*BsmtQual/ chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables BsmtQual*MSZoning / chisq;
+exact pchi;
+run;
+
+proc freq data=train3;
+tables BsmtQual*CentralAir / chisq;
+exact pchi;
+run;
+
+/* not enough memory */
+/*proc freq data=train3;
+tables Neighborhood*CentralAir / chisq;
+exact pchi;
+run;
+ */
+
+proc freq data=train3;
+tables MSZoning*CentralAir / chisq;
+exact pchi;
+run;

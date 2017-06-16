@@ -1,0 +1,243 @@
+/***********************************************/
+/***********************************************/
+/*           APPENDIX for Model                */ 
+/*      Variable-Selection Techniques          */
+/***********************************************/
+/***********************************************/
+
+/***********************************************/
+/***********************************************/
+/*             1. FORWARD SELECTION            */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=forward(select=AIC stop=CV) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=FwdData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsFwd;
+	set FwdData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92);  /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsFwd;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsFwd;
+var SalePrice;
+run;
+
+/***********************************************/
+/***********************************************/
+/*           2. BACKWARD SELECTION             */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=backward(select=AIC stop=CV) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=BckData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsBck;
+	set BckData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92);  /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsFwd;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsBck;
+var SalePrice;
+run;
+
+
+/***********************************************/
+/***********************************************/
+/*          3. STEPWISE SELECTION              */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=stepwise(select=AIC stop=cv) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=StepData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsStep;
+	set StepData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92); /* mean of training data */
+	if Predict='.' then LogSalePrice = log(180932.92); /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsStep;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsStep;
+var SalePrice;
+run;
+
+/***********************************************/
+/***********************************************/
+/*             4. LASSO SELECTION              */
+/*         Train2 Data vs. LogSalePrice        */
+/***********************************************/
+/***********************************************/
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition 
+/ selection=LASSO(choose=SBC stop=cv) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=LassoData p=predict r=resid;
+run;quit;
+ODS GRAPHICS OFF; 
+/* Filter out and calculate Prediction */
+data resultsLasso;
+	set LassoData;
+	if Predict > 0 then LogSalePrice = Predict;
+	if Predict < 0 then LogSalePrice = log(180932.92); /* mean of training data */
+	if Predict='.' then LogSalePrice = log(180932.92); /* mean of training data */
+	SalePrice2 = SalePrice;
+	SalePrice = exp(LogSalePrice);
+	keep id SalePrice;
+	where id > 1460;
+run;
+proc print data = resultsLasso;
+run;
+
+/* Calculated stats around SalePrice */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=resultsLasso;
+var SalePrice;
+run;
+
+/***********************************************
+ ***********************************************
+ *        5. LASSO interaction term example    *
+ *        regression                           *
+ *        Get plots and graphs requested       *
+ *        unpack diagnostics with labels       *
+ ***********************************************
+ ***********************************************/
+proc means maxdec=4 N mean stddev min Q1 median Q3 max data=trainreg;
+var LogSalePrice OverallQual OverAllCond LogGrLivArea GarageCars LogTotalBsmtSF LogGarageArea LogBsmtFinSF1
+    LogGrLivArea LogTotalBsmtSF LogBsmtFinSF1 LogLotArea Log_1stFlrSF;
+run;
+
+data train3; set train2;
+MnAdjOverallQual = OverallQual-6.094;
+MnAdjOverallCond = OverallCond - 5.5761;
+MnAdjLogGrLivArea = LogGrLivArea - 7.266;
+MnAdjGarageCars = GarageCars - 1.7661;
+MnAdjLogTotalBsmtSF = LogTotalBsmtSF - 6.7483;
+MnAdjLogGarageArea = LogGarageArea - 5.8065;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLogLotArea = LogLotArea - 9.1086;
+MnAdjLogBsmtFinSF1 = LogBsmtFinSF1 - 4.2243;
+MnAdjLog_1stFlrSF = Log_1stFlrSF - 7.0067;
+run;
+
+ODS GRAPHICS ON / ATTRPRIORITY=NONE; 
+proc glmselect data = train2 plots = all;  
+
+class Neighborhood MSZoning CentralAir KitchenQual BsmtQual Foundation;
+
+model LogSalePrice =  GarageCars Fireplaces YearBuilt 
+YearRemodAdd MSZoning CentralAir KitchenQual BsmtFullBath BsmtQual LogLotArea 
+Log_1stFlrSF OverallCond
+LogGrLivArea | LogBsmtFinSF1 | LogGarageArea | OverallQual | Neighborhood
+@2 / selection=LASSO(choose=SBC stop=cv) cvmethod=random(2) hierarchy=single showpvalues stat=all;
+output out=LassoData p=predict r=resid;
+/* LogTotalBsmtSF LogBsmtFinSF1 MnAdjOverallQual*Foundation Fireplaces*CentralAir */
+run;quit;
+
+ODS GRAPHICS OFF; 

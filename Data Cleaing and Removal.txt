@@ -1,0 +1,29 @@
+/***********************************************
+ ***********************************************
+ * APPENDIX on Data Cleaning (Additonal Code)  *
+ ***********************************************
+ ***********************************************/
+proc freq data=WORK.IMPORT2;
+table Utilities PoolQC Fence MiscFeature;
+run;
+
+/***********************************************
+ ***********************************************
+ * APPENDIX on Data Removal (Additonal Code)   *
+ ***********************************************
+ ***********************************************/
+/* Please note to run this analysis you may need comment 
+   out the section of SAS code that removed data points
+   1299 and 524.
+/* Breakout of all Quantitative variables by 
+   Neighborhood and OverallQual */
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=trainreg;
+class Neighborhood;
+var SalePrice OverallQual OverAllCond GrLivArea GarageCars GarageArea 
+    BsmtFinSF1 GrLivArea TotalBsmtSF BsmtFinSF1 LotArea _1stFlrSF;
+run;
+proc means maxdec=2 N mean stddev min Q1 median Q3 max data=trainreg;
+class OverallQual;
+var SalePrice OverallQual OverAllCond GrLivArea GarageCars GarageArea 
+    BsmtFinSF1 GrLivArea TotalBsmtSF BsmtFinSF1 LotArea _1stFlrSF;
+run;

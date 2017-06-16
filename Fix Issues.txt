@@ -1,0 +1,52 @@
+/********************************************************************/
+/* 1. Fix Issues with LotFrontage Data characters instead of number */
+/* 2. Add LogSalPrice and LogGrLivArea to both trainreg and train2  */
+/********************************************************************/
+data train2;
+	set train2 (rename=(LotFrontage = LotFrontageChar)) ;
+	LotFrontage = input(LotFrontageChar,best.);
+	LogSalePrice = log(SalePrice);
+	LogGrLivArea = log(GrLivArea); 
+	LogTotalBsmtSF = log(TotalBsmtSF+1); 
+	LogLotArea = log(LotArea+1);
+	LogBsmtFinSF1 = log(BsmtFinSF1+1);
+	Log_1stFlrSF = log(_1stFlrSF+1);
+	Log_2ndFlrSF = log(_2ndFlrSF+1);
+	LogGarageArea = log(GarageArea + 1);
+	LogBsmtFinSF2 = log(BsmtFinSF2 + 1);
+	LogBsmtUnfSF = log(BsmtUnfSF + 1);
+	LogLotFrontage = log(LotFrontage+1);
+	LogWoodDeckSF = log(WoodDeckSF+1);
+	LogOpenPorchSF = log(OpenPorchSF+1);
+	LogMasVnrArea = log(MasVnrArea+1);
+	LogEnclosedPorch = log(EnclosedPorch+1); 
+	Log_3SsnPorch    = log(_3SsnPorch+1);
+	LogScreenPorch = log(ScreenPorch+1); 
+	LogPoolArea = log(PoolArea+1);
+	Drop LotFrontageChar;	
+run;
+
+data trainreg;
+	set trainreg (rename=(LotFrontage = LotFrontageChar)) ;
+	LotFrontage = input(LotFrontageChar,best.);
+	LogSalePrice = log(SalePrice);
+	LogGrLivArea = log(GrLivArea); 
+	LogTotalBsmtSF = log(TotalBsmtSF+1); 
+	LogLotArea = log(LotArea+1);
+	LogBsmtFinSF1 = log(BsmtFinSF1+1);
+	Log_1stFlrSF = log(_1stFlrSF+1);
+	Log_2ndFlrSF = log(_2ndFlrSF+1);
+	LogGarageArea = log(GarageArea + 1);
+	LogBsmtFinSF2 = log(BsmtFinSF2 + 1);
+	LogBsmtUnfSF = log(BsmtUnfSF + 1);
+	LogLotFrontage = log(LotFrontage+1);
+	LogWoodDeckSF = log(WoodDeckSF+1);
+	LogOpenPorchSF = log(OpenPorchSF+1);
+	LogMasVnrArea = log(MasVnrArea+1);
+	LogEnclosedPorch = log(EnclosedPorch+1); 
+	Log_3SsnPorch    = log(_3SsnPorch+1);
+	LogScreenPorch = log(ScreenPorch+1); 
+	LogPoolArea = log(PoolArea+1);
+	Group = 1;
+	Drop LotFrontageChar;	
+run;

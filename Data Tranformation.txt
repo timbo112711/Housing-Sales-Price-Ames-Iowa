@@ -1,0 +1,56 @@
+/***********************************************
+ ***********************************************
+ * APPENDIX on Data Transformation to Natural  *
+ *              Log (Additonal Code)           *
+ ***********************************************
+ ***********************************************/
+/************* Linear regression of orginal response ***************
+ ************* and some explanatory variables  ****/ 
+proc glm data=trainreg plots(unpack)=diagnostic(label);  /* plot=all */  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model SalePrice = GrLivArea Neighborhood MSSubClass MSZoning LotFrontage LotArea Street LotShape LandContour  
+LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle OverallQual OverallCond YearBuilt 
+YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd MasVnrType MasVnrArea ExterQual ExterCond Foundation 
+BsmtQual BsmtCond BsmtExposure BsmtFinType1 BsmtFinSF1 BsmtFinType2 BsmtFinSF2 BsmtUnfSF 
+TotalBsmtSF Heating HeatingQC CentralAir Electrical _1stFlrSF _2ndFlrSF LowQualFinSF 
+BsmtFullBath BsmtHalfBath FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars GarageArea 
+GarageQual GarageCond PavedDrive WoodDeckSF OpenPorchSF EnclosedPorch _3SsnPorch ScreenPorch 
+PoolArea MiscVal MoSold YrSold	SaleType SaleCondition / CLI CLPARM CLM SOLUTION TOLERANCE CLM;
+output out=CustData p=predict PRESS=CVPress;
+
+run;quit;
+
+/************* Linear regression of transformed response ***************
+ ************* and some explanatory variables by the natural log  ****/ 
+proc glm data=trainreg plots(unpack)=diagnostic(label);  /* plot=all */  
+
+class MSZoning Street LotShape LandContour LotConfig LandSlope Neighborhood 
+Condition1 Condition2 BldgType HouseStyle RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure BsmtFinType1 
+BsmtFinType2 Heating HeatingQC CentralAir Electrical KitchenQual Functional FireplaceQu 
+GarageType GarageFinish GarageQual GarageCond PavedDrive
+SaleType SaleCondition; 
+
+model LogSalePrice = LogGrLivArea Neighborhood MSSubClass MSZoning LogLotFrontage LogLotArea 
+Street LotShape LandContour LotConfig LandSlope Condition1 Condition2 BldgType HouseStyle 
+OverallQual OverallCond YearBuilt YearRemodAdd RoofStyle RoofMatl Exterior1st Exterior2nd 
+MasVnrType LogMasVnrArea ExterQual ExterCond Foundation BsmtQual BsmtCond BsmtExposure 
+BsmtFinType1 LogBsmtFinSF1 BsmtFinType2 LogBsmtFinSF2 LogBsmtUnfSF LogTotalBsmtSF Heating 
+HeatingQC CentralAir Electrical Log_1stFlrSF Log_2ndFlrSF LowQualFinSF BsmtFullBath BsmtHalfBath 
+FullBath HalfBath BedroomAbvGr KitchenAbvGr KitchenQual TotRmsAbvGrd 
+Functional Fireplaces FireplaceQu GarageType GarageYrBlt GarageFinish GarageCars LogGarageArea 
+GarageQual GarageCond PavedDrive LogWoodDeckSF LogOpenPorchSF LogEnclosedPorch Log_3SsnPorch 
+LogScreenPorch LogPoolArea MiscVal MoSold YrSold SaleType SaleCondition / CLI CLPARM CLM SOLUTION TOLERANCE CLM;
+output out=CustData p=predict PRESS=CVPress;
+
+run;quit;
+
+ODS GRAPHICS OFF; 
