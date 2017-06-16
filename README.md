@@ -1,9 +1,9 @@
 # Housing-Sales-Price-Ames-Iowa
 # Collaborative project for MSDS6372-Applied Statistics: Inferenceing and Modeling
-## By:
-## James Hosker
-## Timothy McWilliams
-## Leticia Valadez
+### By:
+### James Hosker
+### Timothy McWilliams
+### Leticia Valadez
 
 ## SAS (Staistical Analysis Software) was used to complete this project.
 
